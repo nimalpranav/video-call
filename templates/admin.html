@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    h2 {
+      margin-top: 30px;
+      color: #444;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background: #007bff;
+      color: #fff;
+    }
+    tr:hover {
+      background: #f1f1f1;
+    }
+    a {
+      color: #007bff;
+      text-decoration: none;
+      margin: 0 5px;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    form {
+      margin-top: 15px;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 70%;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      background: #007bff;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .card {
+      background: #fff;
+      padding: 20px;
+      margin-top: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .stat-box {
+      flex: 1;
+      background: #fff;
+      padding: 20px;
+      text-align: center;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .stat-box h3 {
+      margin: 0;
+      font-size: 22px;
+      color: #007bff;
+    }
+    .stat-box p {
+      margin: 5px 0 0;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Admin Dashboard</h1>
+
+  <!-- Quick Stats -->
+  <div class="stats">
+    <div class="stat-box">
+      <h3>{{ users|length }}</h3>
+      <p>Total Users</p>
+    </div>
+    <div class="stat-box">
+      <h3>{{ rooms|length }}</h3>
+      <p>Active Rooms</p>
+    </div>
+    <div class="stat-box">
+      <h3>{{ online_users|length }}</h3>
+      <p>Currently Online</p>
+    </div>
+  </div>
+
+  <!-- Users Management -->
+  <div class="card">
+    <h2>Users</h2>
+    <table>
+      <tr>
+        <th>Username</th>
+        <th>Status</th>
+        <th>Last Login</th>
+        <th>Blocked</th>
+        <th>Actions</th>
+      </tr>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.name }}</td>
+        <td>{{ 'Online' if u.online else 'Offline' }}</td>
+        <td>{{ u.last_login }}</td>
+        <td>{{ 'Yes' if u.blocked else 'No' }}</td>
+        <td>
+          <a href="/admin/delete/{{ u.name }}">Delete</a> |
+          <a href="/admin/block/{{ u.name }}">{{ 'Unblock' if u.blocked else 'Block' }}</a> |
+          <a href="/admin/reset/{{ u.name }}">Reset Password</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <!-- Active Rooms -->
+  <div class="card">
+    <h2>Active Rooms</h2>
+    <ul>
+      {% for room in rooms %}
+      <li>
+        <b>{{ room.name }}</b> - Users: {{ room.users|join(', ') }}
+        [<a href="/call?room={{ room.name }}&admin=1">Join</a>] |
+        [<a href="/admin/close/{{ room.name }}">Close</a>]
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Broadcast -->
+  <div class="card">
+    <h2>Broadcast Message</h2>
+    <form method="post" action="/admin/broadcast">
+      <input type="text" name="msg" placeholder="Message for everyone" required>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <!-- System Controls -->
+  <div class="card">
+    <h2>System Controls</h2>
+    <form method="post" action="/admin/shutdown">
+      <button type="submit" style="background:red;">Shutdown Server</button>
+    </form>
+    <form method="post" action="/admin/restart" style="margin-top:10px;">
+      <button type="submit" style="background:orange;">Restart Server</button>
+    </form>
+  </div>
+
+</body>
+</html>

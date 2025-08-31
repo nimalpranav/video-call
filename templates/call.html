@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Video Call – {{ room }}</title>
+  <style>
+    body{margin:0;font-family:system-ui,Arial;background:#0b1220;color:#e5e7eb}
+    header{padding:12px 16px;background:#0f172a;display:flex;justify-content:space-between;align-items:center}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px}
+    video{width:100%;aspect-ratio:16/9;background:#000;border-radius:12px}
+    .controls{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:8px}
+    button{padding:10px 14px;border-radius:10px;border:0;background:#111827;color:#e5e7eb;cursor:pointer}
+  </style>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+  <header>
+    <div>Room: <strong>{{ room }}</strong></div>
+    <div>Logged in as <strong>{{ user }}</strong></div>
+  </header>
+
+  <main class="grid">
+    <div>
+      <h3>🟢 You</h3>
+      <video id="local" autoplay playsinline muted></video>
+    </div>
+    <div>
+      <h3>👥 Remote</h3>
+      <video id="remote" autoplay playsinline></video>
+    </div>
+  </main>
+
+  <div class="controls">
+    <button id="muteBtn">Mute</button>
+    <button id="camBtn">Camera Off</button>
+    <button id="leaveBtn">Leave</button>
+  </div>
+
+  <script>
+    const room = '{{ room }}';
+    const name = '{{ user }}';
+    const socket = io();
+
+    let pc;
+    let localStream;
+
+    const localVideo = document.getElementById('local');
+    const remoteVideo = document.getElementById('remote');
+
+    const iceServers = [{ urls: 'stun:stun.l.google.com:19302' }];
+
+    async function init(){
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
+        localVideo.srcObject = localStream;
+
+        pc = new RTCPeerConnection({ iceServers });
+
+        localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+        pc.ontrack = (e) => {
+          remoteVideo.srcObject = e.streams[0];
+        };
+
+        pc.onicecandidate = (e) => {
+          if (e.candidate) {
+            socket.emit('ice-candidate', { room, candidate: e.candidate });
+          }
+        };
+
+        socket.emit('join', { room, name });
+      } catch (err) {
+        alert('Could not get media: ' + err);
+      }
+    }
+
+    // When someone else joins, we create and send an offer
+    socket.on('user-joined', async ({name: other}) => {
+      if (!pc) return;
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('offer', { room, offer });
+      } catch(e) {
+        console.error(e);
+      }
+    });
+
+    socket.on('offer', async ({offer}) => {
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('answer', { room, answer });
+      } catch(e) { console.error(e); }
+    });
+
+    socket.on('answer', async ({answer}) => {
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      } catch(e) { console.error(e); }
+    });
+
+    socket.on('ice-candidate', async ({candidate}) => {
+      try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch(e) { console.error(e); }
+    });
+
+    // Controls
+    document.getElementById('muteBtn').onclick = () => {
+      const at = localStream.getAudioTracks()[0];
+      if (at) at.enabled = !at.enabled;
+    };
+    document.getElementById('camBtn').onclick = () => {
+      const vt = localStream.getVideoTracks()[0];
+      if (vt) vt.enabled = !vt.enabled;
+    };
+    document.getElementById('leaveBtn').onclick = () => {
+      socket.emit('leave', { room, name });
+      if (pc) pc.close();
+      window.location.href = '/';
+    };
+
+socket.on("broadcast", data => {
+    alert("📢 Admin: " + data.message);
+});
+
+socket.on("force-logout", () => {
+  alert("⚠️ Admin logged out all users");
+  window.location.href = "/";
+});
+
+    init();
+  </script>
+</body>
+</html>

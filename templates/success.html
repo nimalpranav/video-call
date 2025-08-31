@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            background: #f4f4f4;
+        }
+        .card {
+            display: inline-block;
+            padding: 30px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: green;
+        }
+        .secret {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            background: #222;
+            color: lime;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🎉 Welcome back, {{ name }}!</h1>
+        <p>You have successfully logged in with your face.</p>
+
+        <!-- Protected content -->
+        <div class="secret">
+            <h2>🔐 Secret Dashboard</h2>
+            <p>Here is your private content only visible after login.</p>
+            <ul>
+                <li>📂 Access to hidden files</li>
+                <li>📊 Your statistics</li>
+                <li>⚙️ Settings panel</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

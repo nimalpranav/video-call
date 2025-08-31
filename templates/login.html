@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Face Login</title>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+</head>
+<body>
+  <h1>Face Login</h1>
+  <video id="video" autoplay playsinline width="320" height="240"></video>
+  <br>
+  <button onclick="capture()">Login</button>
+
+  <script>
+    const socket = io();
+    const video = document.getElementById('video');
+
+    // Request camera
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => { video.srcObject = stream; })
+      .catch(err => { alert("Camera access error: " + err); });
+
+    function capture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+
+      // Send image to server
+      fetch('/login', {
+        method: 'POST',
+        body: canvas.toDataURL('image/jpeg')
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("Welcome " + data.user);
+          window.location.href = "/call?room=lobby";
+        } else {
+          alert("Login failed");
+        }
+      });
+    }
+  </script>
+</body>
+</html>
